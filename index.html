@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>หมู่บ้านพอเพียง | เกมบริหารประเทศ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Sarabun:wght@400;500;600&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --paper: #FBF7EA;
+      --panel: #FFFDF6;
+      --ink: #2A2113;
+      --ink-soft: #6B6247;
+
+      --paddy: #2F5233;
+      --paddy-light: #4C7A3D;
+      --gold: #F2C245;
+      --gold-deep: #B8842E;
+      --clay: #A85C32;
+      --clay-deep: #6E4520;
+      --indigo: #2C3E66;
+      --indigo-deep: #1E2A47;
+      --danger: #B5432E;
+
+      --sky-top: #BFE0EF;
+      --sky-bot: #EAF3E3;
+      --cloud: #FFFFFF;
+      --cloud-sh: #CFE1E9;
+      --hill: #3F6E85;
+
+      --pixel-border: #2A2113;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Sarabun', sans-serif;
+      line-height: 1.65;
+    }
+
+    h1,
+    h2,
+    h3,
+    .display {
+      font-family: 'Kanit', sans-serif;
+      margin: 0;
+    }
+
+    .px {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    img,
+    svg {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #app {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 0 60px;
+    }
+
+    /* ============ WORLD STRIP (persistent scene) ============ */
+    .world {
+      position: relative;
+      width: 100%;
+      height: 132px;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-top) 55%, var(--sky-bot) 55%, var(--sky-bot) 100%);
+      border-bottom: 4px solid var(--pixel-border);
+    }
+
+    .sun {
+      position: absolute;
+      top: 14px;
+      right: 34px;
+      width: 30px;
+      height: 30px;
+      background: var(--gold);
+      border: 3px solid var(--gold-deep);
+    }
+
+    .cloud {
+      position: absolute;
+      top: 18px;
+      display: flex;
+      gap: 0;
+      animation: drift 38s linear infinite;
+    }
+
+    .cloud .c1 {
+      width: 22px;
+      height: 8px;
+      background: var(--cloud);
+      border: 2px solid var(--cloud-sh);
+    }
+
+    .cloud .c2 {
+      width: 14px;
+      height: 8px;
+      background: var(--cloud);
+      border: 2px solid var(--cloud-sh);
+      margin-top: -8px;
+      margin-left: 6px;
+    }
+
+    .cloud.b {
+      top: 38px;
+      animation-duration: 52s;
+      animation-delay: -10s;
+      opacity: .8;
+      transform: scale(0.8);
+    }
+
+    @keyframes drift {
+      from {
+        left: -60px;
+      }
+
+      to {
+        left: 110%;
+      }
+    }
+
+    .hills {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 34px;
+      height: 26px;
+      background: var(--hill);
+      opacity: .35;
+      clip-path: polygon(0% 100%, 0% 40%, 8% 20%, 16% 45%, 26% 10%, 36% 40%, 48% 15%, 58% 42%, 70% 18%, 82% 44%, 92% 22%, 100% 40%, 100% 100%);
+    }
+
+    .ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 34px;
+      background: var(--clay);
+    }
+
+    .ground::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -8px;
+      height: 8px;
+      background: var(--paddy-light);
+      clip-path: polygon(0% 100%, 0% 30%, 4% 0%, 8% 40%, 12% 0%, 16% 40%, 20% 0%, 24% 40%, 28% 0%, 32% 40%, 36% 0%, 40% 40%, 44% 0%, 48% 40%, 52% 0%, 56% 40%, 60% 0%, 64% 40%, 68% 0%, 72% 40%, 76% 0%, 80% 40%, 84% 0%, 88% 40%, 92% 0%, 96% 40%, 100% 0%, 100% 100%);
+    }
+
+    .village-slots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 2px;
+      height: 60px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-evenly;
+      padding: 0 10px;
+    }
+
+    .vslot {
+      width: 40px;
+      height: 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(6px) scale(0.7);
+      transition: opacity .5s ease, transform .5s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .vslot.on {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .vslot svg {
+      width: 38px;
+      height: 32px;
+    }
+
+    .vslot .stake {
+      display: none;
+    }
+
+    .unlock-toast {
+      position: absolute;
+      left: 50%;
+      bottom: 64px;
+      transform: translate(-50%, 8px);
+      background: var(--ink);
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      font-family: 'Press Start 2P';
+      font-size: 8.5px;
+      padding: 6px 10px;
+      opacity: 0;
+      transition: opacity .35s ease, transform .35s ease;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .unlock-toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* ============ HUD (stat bars) ============ */
+    .hud {
+      display: none;
+      margin: 14px 14px 0;
+      background: linear-gradient(180deg, #EFE1C0, #DFC896);
+      border: 3px solid var(--pixel-border);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.18);
+      padding: 10px 12px;
+      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hud.show {
+      display: grid;
+    }
+
+    @media(min-width:640px) {
+      .hud {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-top {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .stat-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .stat-num {
+      margin-left: auto;
+      font-family: 'Press Start 2P';
+      font-size: 9px;
+      color: var(--ink-soft);
+    }
+
+    .segs {
+      display: flex;
+      gap: 2px;
+    }
+
+    .seg {
+      flex: 1;
+      height: 10px;
+      background: #fff;
+      border: 2px solid var(--pixel-border);
+    }
+
+    .seg.on {
+      background: var(--seg-color, var(--gold));
+    }
+
+    /* ============ Panels / cards ============ */
+    .screen {
+      display: none;
+      padding: 0 14px;
+      margin-top: 16px;
+    }
+
+    .screen.active {
+      display: block;
+      animation: fadein .3s ease;
+    }
+
+    @keyframes fadein {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 3px solid var(--pixel-border);
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.16);
+      padding: 26px 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 3px solid var(--pixel-border);
+      cursor: pointer;
+      font-family: 'Kanit';
+      font-weight: 700;
+      font-size: 15.5px;
+      background: var(--gold);
+      color: var(--ink);
+      padding: 13px 24px;
+      box-shadow: 4px 4px 0 var(--pixel-border);
+      transition: transform .08s ease, box-shadow .08s ease;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn:active,
+    .btn.press {
+      transform: translate(4px, 4px);
+      box-shadow: 0 0 0 var(--pixel-border);
+    }
+
+    .btn.secondary {
+      background: var(--panel);
+    }
+
+    .btn.dark {
+      background: var(--indigo);
+      color: #fff;
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: default;
+      box-shadow: 4px 4px 0 var(--pixel-border);
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    /* Start screen */
+    .badge-title {
+      text-align: center;
+    }
+
+    .start-title {
+      font-size: clamp(24px, 4.6vw, 34px);
+      font-weight: 800;
+      text-align: center;
+      text-shadow: 2px 2px 0 rgba(47, 82, 51, 0.18);
+    }
+
+    .start-sub {
+      text-align: center;
+      color: var(--ink-soft);
+      max-width: 540px;
+      margin: 10px auto 0;
+      font-size: 15px;
+    }
+
+    .principle-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 24px 0 6px;
+    }
+
+    .principle {
+      border: 2px solid var(--pixel-border);
+      padding: 12px 8px;
+      text-align: center;
+      background: var(--paper);
+    }
+
+    .principle .p-title {
+      font-family: 'Kanit';
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--paddy);
+    }
+
+    .principle .p-desc {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+
+    .role-preview {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 22px 0 4px;
+    }
+
+    .role-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid var(--pixel-border);
+      padding: 5px 12px 5px 5px;
+      background: var(--paper);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .chip-badge {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--pixel-border);
+      flex-shrink: 0;
+    }
+
+    .chip-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Scenario intro */
+    .scenario-intro {
+      text-align: center;
+    }
+
+    .scn-eyebrow {
+      font-family: 'Press Start 2P';
+      font-size: 9px;
+      color: var(--gold-deep);
+      letter-spacing: .02em;
+    }
+
+    .scn-title {
+      font-size: 23px;
+      margin-top: 10px;
+    }
+
+    .scn-text {
+      max-width: 540px;
+      margin: 14px auto 0;
+      color: var(--ink-soft);
+      font-size: 14.5px;
+    }
+
+    .scn-chain {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chain-badge {
+      width: 30px;
+      height: 30px;
+      border: 2px solid var(--pixel-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chain-badge svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .chain-arrow {
+      font-family: 'Press Start 2P';
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    /* Question screen */
+    .q-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .q-role {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .q-role .badge {
+      width: 30px;
+      height: 30px;
+      border: 2px solid var(--pixel-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .q-role .badge svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .q-count {
+      font-family: 'Press Start 2P';
+      font-size: 10px;
+      color: var(--ink-soft);
+    }
+
+    .progress-bar {
+      height: 8px;
+      border: 2px solid var(--pixel-border);
+      background: var(--paper);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar>div {
+      height: 100%;
+      background: var(--gold);
+      transition: width .4s steps(12);
+    }
+
+    .q-label {
+      font-size: 11.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--clay);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .q-text {
+      font-size: 18.5px;
+      font-weight: 700;
+      font-family: 'Kanit';
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .choices {
+      display: grid;
+      gap: 12px;
+    }
+
+    .choice {
+      text-align: left;
+      border: 2.5px solid var(--pixel-border);
+      background: var(--paper);
+      padding: 15px 16px;
+      cursor: pointer;
+      font-size: 14.5px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.14);
+      transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+    }
+
+    .choice:hover:not([disabled]) {
+      background: #fff;
+    }
+
+    .choice:active:not([disabled]) {
+      transform: translate(3px, 3px);
+      box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.14);
+    }
+
+    .choice .num {
+      font-family: 'Press Start 2P';
+      font-size: 11px;
+      color: var(--paper);
+      background: var(--paddy);
+      border: 2px solid var(--pixel-border);
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .choice.picked {
+      background: #FFF3D2;
+      border-color: var(--gold-deep);
+      transform: translate(3px, 3px);
+      box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.14);
+    }
+
+    .choice[disabled] {
+      cursor: default;
+    }
+
+    .feedback {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 2px solid var(--pixel-border);
+      background: #EFE7CE;
+      font-size: 13.5px;
+      color: var(--ink);
+      display: none;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .feedback .fnext {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    .q-nav {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    /* Ending */
+    .ending-wrap {
+      text-align: center;
+    }
+
+    .ending-title {
+      font-size: 23px;
+    }
+
+    .ending-tag {
+      font-family: 'Press Start 2P';
+      font-size: 10px;
+      padding: 8px 14px;
+      display: inline-block;
+      margin: 12px auto 0;
+      border: 2px solid var(--pixel-border);
+    }
+
+    .ending-desc {
+      max-width: 540px;
+      margin: 16px auto 0;
+      color: var(--ink-soft);
+      font-size: 14.5px;
+    }
+
+    .final-hud {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 26px 0 6px;
+      text-align: left;
+    }
+
+    @media(min-width:640px) {
+      .final-hud {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .summary-toggle {
+      text-align: center;
+      margin-top: 22px;
+    }
+
+    #summaryList {
+      margin-top: 16px;
+      display: none;
+      text-align: left;
+    }
+
+    #summaryList.show {
+      display: block;
+    }
+
+    .sum-item {
+      border-bottom: 2px dashed var(--paper);
+      padding: 12px 0;
+      font-size: 13px;
+    }
+
+    .sum-item .sr {
+      font-family: 'Press Start 2P';
+      color: var(--ink-soft);
+      font-size: 8.5px;
+    }
+
+    .sum-item .sq {
+      font-family: 'Kanit';
+      font-weight: 600;
+      margin: 5px 0 2px;
+    }
+
+    .sum-item .sa {
+      color: var(--paddy);
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 11.5px;
+      margin-top: 30px;
+    }
+
+    @media (max-width:600px) {
+      .world {
+        height: 104px;
+      }
+
+      .vslot {
+        width: 30px;
+        height: 34px;
+      }
+
+      .vslot svg {
+        width: 28px;
+        height: 24px;
+      }
+
+      .principle-row {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 20px 16px;
+      }
+
+      .scn-chain {
+        display: none;
+      }
+    }
+
+    @media print {
+
+      .world,
+      .hud,
+      .btn-row,
+      .q-nav,
+      .summary-toggle,
+      footer {
+        display: none !important;
+      }
+
+      #summaryList {
+        display: block !important;
+      }
+
+      .screen {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="world" id="world">
+    <div class="sun"></div>
+    <div class="cloud">
+      <div class="c1"></div>
+      <div class="c2"></div>
+    </div>
+    <div class="cloud b">
+      <div class="c1"></div>
+      <div class="c2"></div>
+    </div>
+    <div class="hills"></div>
+    <div class="ground"></div>
+    <div class="village-slots" id="villageSlots"></div>
+    <div class="unlock-toast" id="unlockToast"></div>
+  </div>
+
+  <div id="app">
+
+    <div class="hud" id="hud"></div>
+
+    <!-- START -->
+    <section class="screen active" id="screen-start">
+      <div class="card">
+        <div class="scn-eyebrow badge-title">เกมจำลองสถานการณ์ 2D</div>
+        <h1 class="start-title">หมู่บ้านพอเพียง</h1>
+        <p class="start-sub">
+          ประเทศของคุณกำลังจะเผชิญ 5 เหตุการณ์สำคัญ แต่ละเหตุการณ์จะส่งผลต่อกันเป็นลูกโซ่
+          ผ่านมุมมองของ 4 บทบาท — เมื่อคนหนึ่งตัดสินใจ อีกคนก็ต้องรับผลและตัดสินใจต่อ
+          ทุกการเลือกจะเปลี่ยนสถานะประเทศทั้ง 4 ด้าน และค่อยๆ สร้างหมู่บ้านขึ้นทีละหลัง
+        </p>
+
+        <div class="principle-row">
+          <div class="principle">
+            <div class="p-title">พอประมาณ</div>
+            <div class="p-desc">ตัดสินใจอย่างพอดี ไม่สุดโต่ง</div>
+          </div>
+          <div class="principle">
+            <div class="p-title">มีเหตุผล</div>
+            <div class="p-desc">ชั่งน้ำหนักผลกระทบก่อนเลือก</div>
+          </div>
+          <div class="principle">
+            <div class="p-title">มีภูมิคุ้มกัน</div>
+            <div class="p-desc">เตรียมพร้อมรับความเปลี่ยนแปลง</div>
+          </div>
+        </div>
+
+        <div class="role-preview" id="rolePreview"></div>
+
+        <div class="btn-row">
+          <button class="btn" id="btnStart">เริ่มเกม</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENARIO INTRO -->
+    <section class="screen" id="screen-scenario">
+      <div class="card scenario-intro">
+        <div class="scn-eyebrow" id="scnEyebrow"></div>
+        <h2 class="scn-title" id="scnTitle"></h2>
+        <p class="scn-text" id="scnText"></p>
+        <div class="scn-chain" id="scnChain"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnScenarioContinue">เริ่มบทนี้</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUESTION -->
+    <section class="screen" id="screen-question">
+      <div class="card">
+        <div class="q-meta">
+          <div class="q-role" id="qRole"></div>
+          <div class="q-count" id="qCount"></div>
+        </div>
+        <div class="progress-bar">
+          <div id="qProgressFill"></div>
+        </div>
+        <div class="q-label" id="qLabel">สถานการณ์</div>
+        <div class="q-text" id="qText"></div>
+        <div class="choices" id="qChoices"></div>
+        <div class="feedback" id="qFeedback"></div>
+        <div class="q-nav">
+          <button class="btn" id="btnNext" disabled>ถัดไป</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDING -->
+    <section class="screen" id="screen-ending">
+      <div class="card ending-wrap">
+        <div class="scn-eyebrow">ผลการบริหารประเทศ</div>
+        <h2 class="ending-title" id="endTitle"></h2>
+        <div class="ending-tag" id="endTag"></div>
+        <p class="ending-desc" id="endDesc"></p>
+
+        <div class="final-hud" id="finalHud"></div>
+
+        <div class="btn-row">
+          <button class="btn secondary" id="btnRestart">เล่นใหม่</button>
+          <button class="btn dark" id="btnPrint">พิมพ์ / บันทึกสรุปส่งอาจารย์</button>
+        </div>
+
+        <div class="summary-toggle">
+          <button class="btn secondary" id="btnToggleSummary">ดูสรุปคำตอบทั้ง 20 ข้อ</button>
+        </div>
+        <div id="summaryList"></div>
+      </div>
+    </section>
+
+    <footer>จัดทำเพื่อการศึกษา · อ้างอิงหลักปรัชญาเศรษฐกิจพอเพียง</footer>
+  </div>
+
+  <script>
+    /* ============================================================
+       PIXEL SPRITE ENGINE
+       ============================================================ */
+    function pixelSVG(rows, palette) {
+      const h = rows.length, w = rows[0].length;
+      let rects = '';
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const ch = rows[y][x];
+          if (ch === '.' || !palette[ch]) continue;
+          rects += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + palette[ch] + '"/>';
+        }
+      }
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">' + rects + '</svg>';
+    }
+
+    const PAL = {
+      gold: '#F2C245', goldDeep: '#B8842E',
+      clay: '#A85C32', clayDeep: '#6E4520',
+      paddy: '#4C7A3D', paddyDeep: '#2F5233',
+      indigo: '#2C3E66', indigoDeep: '#1E2A47',
+      ink: '#2A2113', smoke: '#9B9B90'
+    };
+
+    /* ---- Role badge sprites (8-10 px) ---- */
+    const ROLE_SPRITES = {
+      government: pixelSVG([
+        '..K...K..',
+        '.KK.K.KK.',
+        '.KKKKKKK.',
+        '.KKKKKKK.',
+        '.GGGGGGG.',
+        '.GGGGGGG.',
+        '.KKKKKKK.',
+      ], { K: PAL.goldDeep, G: PAL.gold }),
+
+      merchant: pixelSVG([
+        '..KKKK..',
+        '.K####K.',
+        'K##GG##K',
+        'K######K',
+        'K######K',
+        'K######K',
+        '.K####K.',
+        '..KKKK..',
+      ], { K: PAL.clayDeep, '#': PAL.clay, G: PAL.gold }),
+
+      villager: pixelSVG([
+        '..G.G...',
+        '.G.G.G..',
+        'G.G.G.G.',
+        '..PPP...',
+        '...P....',
+        '...P....',
+        '...P....',
+        '..PPP...',
+      ], { G: PAL.gold, P: PAL.paddy }),
+
+      investor: pixelSVG([
+        '..KKKK..',
+        '..K..K..',
+        'KKKKKKKK',
+        'K######K',
+        'K##GG##K',
+        'K######K',
+        'K######K',
+        'KKKKKKKK',
+      ], { K: PAL.indigoDeep, '#': PAL.indigo, G: PAL.gold }),
+    };
+
+    /* ---- Village building sprites (unlocked per scenario) ---- */
+    const BUILD_SPRITES = [
+      pixelSVG([ // 1. factory
+        '...MM...MM..',
+        '...MM...MM..',
+        '...MM...MM..',
+        '############',
+        '#WWWWWWWWWW#',
+        '#WW##WW##WW#',
+        '#WWWWWWWWWW#',
+        '#WW##WW##WW#',
+        '#WWWWWWWWWW#',
+        '############',
+      ], { M: PAL.smoke, '#': PAL.clayDeep, W: PAL.clay }),
+
+      pixelSVG([ // 2. water tower
+        '....####....',
+        '...######...',
+        '...######...',
+        '...######...',
+        '....####....',
+        '....#..#....',
+        '...#....#...',
+        '...#....#...',
+        '..#......#..',
+        '..#......#..',
+      ], { '#': PAL.indigo }),
+
+      pixelSVG([ // 3. market stall
+        '############',
+        'G#G#G#G#G#G#',
+        'G#G#G#G#G#G#',
+        '............',
+        '#WWWWWWWWWW#',
+        '#..........#',
+        '#.#......#.#',
+        '#.#......#.#',
+      ], { G: PAL.gold, '#': PAL.clayDeep, W: PAL.clay }),
+
+      pixelSVG([ // 4. bank
+        '....####....',
+        '...######...',
+        '############',
+        '#I..I..I..I#',
+        '#I..I..I..I#',
+        '#I..I..I..I#',
+        '#I..I..I..I#',
+        '############',
+      ], { I: PAL.indigo, '#': PAL.indigoDeep }),
+
+      pixelSVG([ // 5. training center
+        '.....##.....',
+        '.....##.....',
+        '....####....',
+        '############',
+        '#PPPPPPPPPP#',
+        '#PP##PP##PP#',
+        '#PPPPPPPPPP#',
+        '#PP##PP##PP#',
+        '#PPPPPPPPPP#',
+        '############',
+      ], { P: PAL.paddy, '#': PAL.paddyDeep }),
+    ];
+
+    /* ---- Stat icons ---- */
+    const STAT_ICONS = {
+      economy: pixelSVG([
+        '.GGGG.', 'G####G', 'G#GG#G', 'G#GG#G', 'G####G', '.GGGG.',
+      ], { G: PAL.goldDeep, '#': PAL.gold }),
+      society: pixelSVG([
+        '.##.##.', '#######', '#######', '.#####.', '..###..',
+      ], { '#': PAL.clay }),
+      environment: pixelSVG([
+        '..P..', '.PPP.', 'PPPPP', '.PPP.', '..P..', '..P..',
+      ], { P: PAL.paddy }),
+      sufficiency: pixelSVG([
+        '..I..', '.III.', 'IIIII', '.I.I.', 'I...I',
+      ], { I: PAL.indigo }),
+    };
+
+    /* ============================================================
+       ROLES
+       ============================================================ */
+    const ROLES = [
+      { id: 'government', name: 'ผู้บริหารประเทศ', desc: 'กำหนดนโยบายระดับชาติที่ส่งผลต่อทุกคนในประเทศ' },
+      { id: 'merchant', name: 'พ่อค้า', desc: 'ขับเคลื่อนการค้าและตลาด รับแรงกระแทกจากทุกการเปลี่ยนแปลง' },
+      { id: 'villager', name: 'ชาวบ้าน', desc: 'รากฐานของประเทศ ผู้ได้รับผลกระทบโดยตรงจากทุกนโยบาย' },
+      { id: 'investor', name: 'นักลงทุนต่างชาติ', desc: 'นำเงินทุนและเทคโนโลยีเข้ามา กำหนดทิศทางการพึ่งพาของประเทศ' },
+    ];
+    function role(id) { return ROLES.find(r => r.id === id); }
+
+    /* ============================================================
+       SCENARIOS — each has 4 chained questions across the 4 roles
+       ============================================================ */
+    const SCENARIOS = [
+      {
+        title: 'นักลงทุนต่างชาติเข้ามาเปิดโรงงาน',
+        text: 'บริษัทต่างชาติรายใหญ่ต้องการเปิดโรงงานผลิตสินค้าส่งออกในพื้นที่ชนบท เหตุการณ์นี้จะไล่ผลกระทบจากนักลงทุน ไปถึงรัฐ พ่อค้า และชาวบ้าน',
+        order: ['investor', 'government', 'merchant', 'villager'],
+        questions: {
+          investor: {
+            label: 'เลือกที่ตั้งโรงงาน', text: 'เมื่อเลือกที่ตั้งโรงงานในพื้นที่ชนบท ควรที่จะ…',
+            choices: [
+              { text: 'เช่าซื้อที่ดินให้ได้มากที่สุดในราคาต่ำ แล้วเร่งก่อสร้างทันที', delta: { economy: 3, society: -1, environment: -3, sufficiency: -3 } },
+              { text: 'ศึกษาผลกระทบต่อชุมชนและเจรจาผลตอบแทนที่เป็นธรรมกับเจ้าของที่ดินก่อน', delta: { economy: 1, society: 2, environment: 2, sufficiency: 3 } },
+            ], feedback: 'การศึกษาผลกระทบก่อนลงทุนคือหลัก “มีเหตุผล” ที่ช่วยป้องกันความขัดแย้งและความเสียหายระยะยาว'
+          },
+          government: {
+            label: 'เงื่อนไขการลงทุนต่างชาติ', text: 'เมื่อนักลงทุนต่างชาติต้องการเปิดโรงงานขนาดใหญ่ รัฐบาลควรที่จะ…',
+            choices: [
+              { text: 'อนุมัติทันทีโดยไม่มีเงื่อนไข เพื่อดึงดูดเงินลงทุนให้เร็วที่สุด', delta: { economy: 3, society: -1, environment: -2, sufficiency: -3 } },
+              { text: 'กำหนดเงื่อนไขด้านสิ่งแวดล้อมและการจ้างแรงงานไทยก่อนอนุมัติ', delta: { economy: 1, society: 2, environment: 2, sufficiency: 3 } },
+            ], feedback: 'การกำหนดเงื่อนไขที่รอบคอบช่วยให้การลงทุนต่างชาติเกิดประโยชน์ต่อประเทศอย่างยั่งยืน ไม่ใช่แค่ตัวเลขเศรษฐกิจ'
+          },
+          merchant: {
+            label: 'ถูกแย่งพื้นที่การค้า', text: 'เมื่อร้านค้าของโรงงานต่างชาติเข้ามาแย่งลูกค้าในพื้นที่เดิม พ่อค้าท้องถิ่นควรที่จะ…',
+            choices: [
+              { text: 'ลดราคาสู้แบบขาดทุนเพื่อรักษาลูกค้าไว้ให้ได้ทุกวิถีทาง', delta: { economy: -1, society: -1, environment: 0, sufficiency: -3 } },
+              { text: 'ปรับตัวด้วยจุดขายเฉพาะตัวและรวมกลุ่มพ่อค้าท้องถิ่นให้แข็งแรงขึ้น', delta: { economy: 1, society: 2, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การปรับตัวและรวมกลุ่มกันแทนการตัดราคาจนขาดทุน สะท้อนหลัก “มีภูมิคุ้มกัน” ในการรับมือคู่แข่งรายใหญ่'
+          },
+          villager: {
+            label: 'ผลกระทบต่อวิถีชุมชน', text: 'เมื่อที่ดินและวิถีชีวิตของชุมชนเปลี่ยนไปเพราะโรงงาน ชาวบ้านควรที่จะ…',
+            choices: [
+              { text: 'ขายที่ดินทั้งหมดให้โรงงานแล้วย้ายเข้าเมืองไปทำงานรับจ้าง', delta: { economy: 1, society: -2, environment: -1, sufficiency: -3 } },
+              { text: 'รวมตัวเจรจากับโรงงานเพื่อรักษาที่ดินบางส่วนไว้ทำเกษตรควบคู่กับรับจ้าง', delta: { economy: 1, society: 2, environment: 1, sufficiency: 3 } },
+            ], feedback: 'การรักษาที่ดินและอาชีพดั้งเดิมควบคู่กับรายได้ใหม่ ช่วยให้ชุมชนไม่พึ่งพาแหล่งรายได้เพียงทางเดียว'
+          },
+        }
+      },
+      {
+        title: 'ภัยแล้งรุนแรงทั่วประเทศ',
+        text: 'ฝนไม่ตกตามฤดูกาลติดต่อกันหลายเดือน ผลผลิตการเกษตรเสียหายหนัก เหตุการณ์นี้เริ่มจากชาวบ้าน ก่อนลุกลามไปถึงรัฐ พ่อค้า และนักลงทุน',
+        order: ['villager', 'government', 'merchant', 'investor'],
+        questions: {
+          villager: {
+            label: 'ผลผลิตเสียหายจากภัยแล้ง', text: 'เมื่อภัยแล้งทำให้ผลผลิตเสียหายหนัก ชาวบ้านควรที่จะ…',
+            choices: [
+              { text: 'กู้เงินนอกระบบมาลงทุนปลูกซ้ำในพื้นที่เดิมทันที', delta: { economy: 1, society: -2, environment: -1, sufficiency: -3 } },
+              { text: 'ปรับพื้นที่บางส่วนทำแหล่งน้ำสำรองและปลูกพืชทนแล้งแทน', delta: { economy: 1, society: 1, environment: 3, sufficiency: 3 } },
+            ], feedback: 'การบริหารจัดการน้ำและเลือกพืชให้เหมาะกับสภาพภูมิอากาศ คือภูมิปัญญาตามแนวทฤษฎีใหม่'
+          },
+          government: {
+            label: 'นโยบายรับมือภัยแล้ง', text: 'รัฐบาลควรรับมือกับวิกฤตภัยแล้งทั่วประเทศอย่างไร',
+            choices: [
+              { text: 'แจกเงินเยียวยาครั้งเดียวให้ทั่วถึงแล้วจบเรื่อง', delta: { economy: 0, society: 1, environment: -1, sufficiency: -2 } },
+              { text: 'ลงทุนพัฒนาระบบชลประทานและแหล่งกักเก็บน้ำระยะยาว', delta: { economy: 1, society: 2, environment: 3, sufficiency: 3 } },
+            ], feedback: 'การแก้ปัญหาที่ต้นเหตุด้วยระบบชลประทานสร้างภูมิคุ้มกันให้ประเทศรับมือภัยแล้งในอนาคตได้ดีกว่าการแจกเงินเฉพาะหน้า'
+          },
+          merchant: {
+            label: 'สินค้าขาดแคลนในตลาด', text: 'เมื่อผลผลิตทางการเกษตรขาดแคลนในตลาด พ่อค้าควรที่จะ…',
+            choices: [
+              { text: 'ฉวยโอกาสขึ้นราคาสินค้าให้สูงที่สุดเท่าที่จะทำได้', delta: { economy: 2, society: -3, environment: 0, sufficiency: -3 } },
+              { text: 'ตั้งราคาตามต้นทุนที่แท้จริงและช่วยกระจายสินค้าที่มีอยู่อย่างทั่วถึง', delta: { economy: 1, society: 2, environment: 0, sufficiency: 2 } },
+            ], feedback: 'การไม่ฉวยโอกาสในยามวิกฤตคือเงื่อนไขด้าน “คุณธรรม” ที่รักษาความไว้วางใจของสังคมไว้ได้'
+          },
+          investor: {
+            label: 'โอกาสจากวิกฤต', text: 'นักลงทุนต่างชาติเห็นโอกาสทำกำไรจากราคาผลผลิตที่พุ่งสูงในภาวะภัยแล้ง ควรที่จะ…',
+            choices: [
+              { text: 'กว้านซื้อผลผลิตที่เหลือน้อยเพื่อเก็งกำไรและส่งออกทั้งหมด', delta: { economy: 2, society: -3, environment: -1, sufficiency: -3 } },
+              { text: 'สนับสนุนเทคโนโลยีบริหารจัดการน้ำให้เกษตรกร แลกกับสัญญาซื้อผลผลิตระยะยาว', delta: { economy: 1, society: 2, environment: 2, sufficiency: 3 } },
+            ], feedback: 'การลงทุนที่ช่วยยกระดับศักยภาพเกษตรกรท้องถิ่นสร้างประโยชน์ร่วมกัน มากกว่าการเก็งกำไรในยามวิกฤต'
+          },
+        }
+      },
+      {
+        title: 'ราคาสินค้าส่งออกพุ่งสูง',
+        text: 'ราคาสินค้าส่งออกหลักของไทยในตลาดโลกพุ่งสูงขึ้นอย่างรวดเร็ว ทุกฝ่ายต่างเห็นโอกาส แต่จะฉวยโอกาสอย่างมีสติ หรือหวังกำไรระยะสั้น?',
+        order: ['government', 'merchant', 'investor', 'villager'],
+        questions: {
+          government: {
+            label: 'นโยบายเมื่อราคาส่งออกพุ่งสูง', text: 'เมื่อราคาสินค้าส่งออกหลักของประเทศพุ่งสูงขึ้นอย่างรวดเร็ว รัฐบาลควรที่จะ…',
+            choices: [
+              { text: 'เร่งส่งเสริมการผลิตเต็มกำลังในทันทีเพื่อส่งออกให้ได้มากที่สุด', delta: { economy: 3, society: -1, environment: -3, sufficiency: -3 } },
+              { text: 'ส่งเสริมการผลิตอย่างสมดุล พร้อมกันเงินส่วนหนึ่งเป็นกองทุนรักษาเสถียรภาพราคา', delta: { economy: 2, society: 2, environment: 1, sufficiency: 3 } },
+            ], feedback: 'การตั้งกองทุนรักษาเสถียรภาพราคาช่วยรองรับความผันผวนเมื่อราคาสินค้าตกลงในอนาคต'
+          },
+          merchant: {
+            label: 'ฉวยโอกาสราคาสูง', text: 'เมื่อราคาสินค้าส่งออกพุ่งสูง พ่อค้าควรที่จะ…',
+            choices: [
+              { text: 'กว้านซื้อสินค้าจากเกษตรกรในราคาต่ำแล้วขายต่อในราคาสูงให้ได้กำไรสูงสุด', delta: { economy: 2, society: -3, environment: 0, sufficiency: -3 } },
+              { text: 'จ่ายราคาที่เป็นธรรมให้เกษตรกรต้นทางและแบ่งปันผลกำไรที่เพิ่มขึ้นร่วมกัน', delta: { economy: 1, society: 3, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การแบ่งปันผลประโยชน์กับต้นทางอย่างเป็นธรรมสร้างห่วงโซ่การค้าที่ยั่งยืนกว่าการกดราคาเพื่อกำไรสูงสุด'
+          },
+          investor: {
+            label: 'ลงทุนเพิ่มในอุตสาหกรรมดาวรุ่ง', text: 'เมื่อเห็นราคาสินค้าส่งออกพุ่งสูง นักลงทุนต่างชาติควรที่จะ…',
+            choices: [
+              { text: 'ทุ่มเงินขยายกำลังผลิตสูงสุดทันที โดยไม่ประเมินความเสี่ยงราคาตก', delta: { economy: 3, society: 0, environment: -2, sufficiency: -3 } },
+              { text: 'ลงทุนขยายอย่างค่อยเป็นค่อยไป พร้อมประเมินความเสี่ยงด้านราคาในอนาคต', delta: { economy: 1, society: 1, environment: 1, sufficiency: 3 } },
+            ], feedback: 'การลงทุนแบบค่อยเป็นค่อยไปคือหลัก “มีเหตุผล” และ “มีภูมิคุ้มกัน” ที่ป้องกันปัญหากำลังผลิตล้นตลาดในอนาคต'
+          },
+          villager: {
+            label: 'โอกาสจากราคาสินค้าที่สูงขึ้น', text: 'ชาวบ้านผู้เป็นเจ้าของวัตถุดิบต้นทาง เมื่อเห็นราคาสินค้าพุ่งสูง ควรที่จะ…',
+            choices: [
+              { text: 'ขยายพื้นที่เพาะปลูกพืชชนิดเดียวเต็มที่ดินทั้งหมดเพื่อขายให้ได้มากที่สุด', delta: { economy: 2, society: -1, environment: -3, sufficiency: -3 } },
+              { text: 'ขยายการผลิตบางส่วนอย่างพอประมาณ และเก็บพื้นที่ไว้ปลูกพืชสำรองความมั่นคงทางอาหาร', delta: { economy: 1, society: 2, environment: 2, sufficiency: 3 } },
+            ], feedback: 'การขยายผลิตอย่างพอประมาณโดยไม่ทิ้งความมั่นคงทางอาหาร ป้องกันความเสี่ยงเมื่อราคาสินค้าตกในอนาคต'
+          },
+        }
+      },
+      {
+        title: 'วิกฤตหนี้สินครัวเรือน',
+        text: 'หนี้สินภาคครัวเรือนพุ่งสูงทั่วประเทศจากการก่อหนี้เกินตัว เหตุการณ์นี้เริ่มจากชาวบ้าน ก่อนลามไปถึงพ่อค้า รัฐ และนักลงทุน',
+        order: ['villager', 'merchant', 'government', 'investor'],
+        questions: {
+          villager: {
+            label: 'หนี้สินพอกพูน', text: 'เมื่อครอบครัวมีหนี้สินพอกพูนจากการกู้ยืมมาซื้อของฟุ่มเฟือย ควรที่จะ…',
+            choices: [
+              { text: 'กู้เพิ่มจากแหล่งอื่นมาโปะหนี้เดิมเพื่อประทังสถานการณ์ไปก่อน', delta: { economy: 0, society: -2, environment: 0, sufficiency: -3 } },
+              { text: 'วางแผนลดรายจ่ายที่ไม่จำเป็นและทยอยชำระหนี้ตามความสามารถจริง', delta: { economy: 0, society: 2, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การเผชิญปัญหาด้วยการวางแผนการเงินอย่างมีเหตุผล ดีกว่าการก่อหนี้ใหม่มากลบหนี้เก่า'
+          },
+          merchant: {
+            label: 'ลูกหนี้ผ่อนชำระไม่ไหว', text: 'เมื่อลูกค้าที่ซื้อสินค้าเชื่อเริ่มผ่อนชำระไม่ไหว พ่อค้าที่ปล่อยเชื่อควรที่จะ…',
+            choices: [
+              { text: 'เร่งทวงหนี้อย่างเข้มงวดและคิดดอกเบี้ยเพิ่มเพื่อไม่ให้ขาดทุน', delta: { economy: 1, society: -3, environment: 0, sufficiency: -2 } },
+              { text: 'เจรจาปรับโครงสร้างหนี้ให้เหมาะกับความสามารถในการจ่ายของลูกค้า', delta: { economy: 0, society: 3, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การเจรจาปรับโครงสร้างหนี้อย่างมีเหตุผลช่วยรักษาความสัมพันธ์ทางธุรกิจในระยะยาว มากกว่าการทวงหนี้อย่างรุนแรง'
+          },
+          government: {
+            label: 'นโยบายแก้หนี้สินประชาชน', text: 'รัฐบาลควรออกนโยบายอย่างไรเพื่อแก้ปัญหาหนี้สินครัวเรือนที่พุ่งสูงทั่วประเทศ',
+            choices: [
+              { text: 'พักหนี้ให้ทุกคนโดยไม่มีเงื่อนไข เพื่อลดแรงกดดันในระยะสั้น', delta: { economy: -1, society: 1, environment: 0, sufficiency: -2 } },
+              { text: 'ส่งเสริมความรู้ทางการเงินควบคู่กับมาตรการพักหนี้แบบมีเงื่อนไขที่เหมาะสม', delta: { economy: 0, society: 2, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การให้ความรู้ทางการเงินควบคู่กับมาตรการช่วยเหลือ คือเงื่อนไข “ความรู้” ที่ป้องกันปัญหาหนี้สินซ้ำในอนาคต'
+          },
+          investor: {
+            label: 'ความเสี่ยงด้านหนี้สินของประเทศ', text: 'เมื่อนักลงทุนต่างชาติเห็นว่าประเทศมีความเสี่ยงด้านหนี้สินครัวเรือนสูง ควรที่จะ…',
+            choices: [
+              { text: 'ถอนการลงทุนออกทันทีเพื่อหลีกเลี่ยงความเสี่ยงทั้งหมด', delta: { economy: -2, society: -1, environment: 0, sufficiency: -1 } },
+              { text: 'ลงทุนในธุรกิจที่ส่งเสริมทักษะอาชีพและรายได้ที่มั่นคงให้แรงงานท้องถิ่น', delta: { economy: 1, society: 2, environment: 1, sufficiency: 3 } },
+            ], feedback: 'การลงทุนที่สร้างรายได้มั่นคงให้แรงงานช่วยแก้ปัญหาหนี้สินที่ต้นเหตุ มากกว่าการถอนตัวหนีความเสี่ยง'
+          },
+        }
+      },
+      {
+        title: 'เทคโนโลยีใหม่แทนที่แรงงาน',
+        text: 'หุ่นยนต์และระบบอัตโนมัติเริ่มเข้ามาแทนที่แรงงานในหลายอุตสาหกรรม เหตุการณ์นี้เริ่มจากนักลงทุน ก่อนส่งผลถึงพ่อค้า ชาวบ้าน และรัฐ',
+        order: ['investor', 'merchant', 'villager', 'government'],
+        questions: {
+          investor: {
+            label: 'นำเทคโนโลยีใหม่เข้ามาใช้', text: 'เมื่อนำหุ่นยนต์และระบบอัตโนมัติเข้ามาใช้ในโรงงาน นักลงทุนควรที่จะ…',
+            choices: [
+              { text: 'เลิกจ้างแรงงานเดิมทั้งหมดทันทีเพื่อลดต้นทุนให้ได้มากที่สุด', delta: { economy: 2, society: -3, environment: 0, sufficiency: -3 } },
+              { text: 'ฝึกอบรมแรงงานเดิมให้ทำงานร่วมกับเทคโนโลยีใหม่แทนการเลิกจ้าง', delta: { economy: 1, society: 3, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การฝึกทักษะใหม่ให้แรงงานแทนการเลิกจ้าง คือการลงทุนด้าน “ความรู้” ที่สร้างความยั่งยืนให้ทั้งธุรกิจและแรงงาน'
+          },
+          merchant: {
+            label: 'คู่แข่งใช้เทคโนโลยีต้นทุนต่ำ', text: 'เมื่อคู่แข่งเริ่มใช้เทคโนโลยีทำให้ต้นทุนต่ำกว่ามาก พ่อค้ารายย่อยควรที่จะ…',
+            choices: [
+              { text: 'กู้เงินก้อนใหญ่มาซื้อเทคโนโลยีเดียวกันทันที โดยไม่ประเมินความสามารถในการใช้หนี้', delta: { economy: 1, society: -1, environment: 0, sufficiency: -3 } },
+              { text: 'ปรับรูปแบบธุรกิจให้เหมาะกับกำลังของตน เช่น เจาะกลุ่มลูกค้าเฉพาะที่เทคโนโลยีทดแทนไม่ได้', delta: { economy: 1, society: 2, environment: 0, sufficiency: 3 } },
+            ], feedback: 'การปรับตัวตามกำลังของตนเองอย่างพอประมาณ ดีกว่าการลงทุนเกินตัวเพื่อไล่ตามคู่แข่ง'
+          },
+          villager: {
+            label: 'ถูกเทคโนโลยีแทนที่งาน', text: 'เมื่อถูกเทคโนโลยีเข้ามาแทนที่งานที่เคยทำ ชาวบ้าน/แรงงานควรที่จะ…',
+            choices: [
+              { text: 'รอความช่วยเหลือจากรัฐเพียงอย่างเดียวโดยไม่ปรับตัว', delta: { economy: -1, society: -1, environment: 0, sufficiency: -3 } },
+              { text: 'เรียนรู้ทักษะใหม่และหารายได้เสริมจากอาชีพที่พึ่งพาตนเองได้ เช่น เกษตรผสมผสาน', delta: { economy: 1, society: 2, environment: 2, sufficiency: 3 } },
+            ], feedback: 'การเรียนรู้ทักษะใหม่และมีอาชีพเสริมที่พึ่งพาตนเองได้ คือภูมิคุ้มกันสำคัญในยุคที่เทคโนโลยีเปลี่ยนแปลงเร็ว'
+          },
+          government: {
+            label: 'นโยบายรองรับการเปลี่ยนแปลงเทคโนโลยี', text: 'รัฐบาลควรวางนโยบายรองรับแรงงานที่ได้รับผลกระทบจากเทคโนโลยีอย่างไร',
+            choices: [
+              { text: 'ปล่อยให้เป็นไปตามกลไกตลาดโดยไม่เข้าไปแทรกแซง', delta: { economy: 1, society: -2, environment: 0, sufficiency: -3 } },
+              { text: 'จัดตั้งศูนย์ฝึกทักษะใหม่และระบบสวัสดิการรองรับช่วงเปลี่ยนผ่าน', delta: { economy: 1, society: 3, environment: 1, sufficiency: 3 } },
+            ], feedback: 'การเตรียมความพร้อมด้านทักษะและสวัสดิการรองรับการเปลี่ยนผ่าน คือการสร้างภูมิคุ้มกันเชิงนโยบายให้สังคม'
+          },
+        }
+      },
+    ];
+
+    /* Flatten into a linear play sequence, tracking scenario boundaries */
+    const PLAY = [];
+    SCENARIOS.forEach((scn, sIdx) => {
+      scn.order.forEach((roleId, stepIdx) => {
+        PLAY.push({
+          scenarioIndex: sIdx,
+          stepIndex: stepIdx,
+          role: roleId,
+          ...scn.questions[roleId],
+        });
+      });
+    });
+    const TOTAL_Q = PLAY.length; // 20
+
+    /* ============================================================
+       STATE
+       ============================================================ */
+    const STAT_KEYS = ['economy', 'society', 'environment', 'sufficiency'];
+    const STAT_META = {
+      economy: { label: 'เศรษฐกิจ', color: 'var(--gold)' },
+      society: { label: 'สังคม', color: 'var(--clay)' },
+      environment: { label: 'สิ่งแวดล้อม', color: 'var(--paddy)' },
+      sufficiency: { label: 'ความพอเพียง', color: 'var(--indigo)' },
+    };
+
+    let stats = { economy: 50, society: 50, environment: 50, sufficiency: 50 };
+    let qIndex = 0;
+    let answers = [];
+    let pendingChoice = null;
+    let unlockedBuildings = new Set();
+
+    const $ = sel => document.querySelector(sel);
+
+    /* ============================================================
+       RENDER HELPERS
+       ============================================================ */
+    function clampStats() { STAT_KEYS.forEach(k => stats[k] = Math.max(0, Math.min(100, stats[k]))); }
+
+    function renderHUD(target) {
+      target.innerHTML = STAT_KEYS.map(k => {
+        const val = Math.round(stats[k]);
+        const filled = Math.round(val / 10);
+        const segs = Array.from({ length: 10 }, (_, i) =>
+          '<div class="seg ' + (i < filled ? 'on' : '') + '" style="--seg-color:' + STAT_META[k].color + '"></div>').join('');
+        return '<div class="stat">'
+          + '<div class="stat-top"><span class="stat-icon">' + STAT_ICONS[k] + '</span>'
+          + '<span class="stat-name">' + STAT_META[k].label + '</span>'
+          + '<span class="stat-num">' + val + '</span></div>'
+          + '<div class="segs">' + segs + '</div></div>';
+      }).join('');
+    }
+
+    function badgeHTML(roleId) {
+      return '<div class="badge">' + ROLE_SPRITES[roleId] + '</div>';
+    }
+    function chipBadgeHTML(roleId) {
+      return '<div class="chip-badge">' + ROLE_SPRITES[roleId] + '</div>';
+    }
+    function chainBadgeHTML(roleId) {
+      return '<div class="chain-badge">' + ROLE_SPRITES[roleId] + '</div>';
+    }
+
+    function renderRolePreview() {
+      $('#rolePreview').innerHTML = ROLES.map(r =>
+        '<div class="role-chip">' + chipBadgeHTML(r.id) + r.name + '</div>'
+      ).join('');
+    }
+
+    function renderVillageSlots() {
+      const wrap = $('#villageSlots');
+      wrap.innerHTML = SCENARIOS.map((_, i) =>
+        '<div class="vslot" id="vslot-' + i + '">' + BUILD_SPRITES[i] + '</div>'
+      ).join('');
+    }
+
+    function unlockBuilding(i, label) {
+      const el = document.getElementById('vslot-' + i);
+      if (el && !unlockedBuildings.has(i)) {
+        unlockedBuildings.add(i);
+        el.classList.add('on');
+        const toast = $('#unlockToast');
+        toast.textContent = 'สร้างแล้ว: ' + label;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+    }
+
+    /* ============================================================
+       SCREEN NAV
+       ============================================================ */
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    /* ---- Start ---- */
+    $('#btnStart').addEventListener('click', () => {
+      $('#hud').classList.add('show');
+      renderHUD($('#hud'));
+      qIndex = 0;
+      goToScenarioIntro(0);
+    });
+
+    /* ---- Scenario intro ---- */
+    function goToScenarioIntro(scnIdx) {
+      const scn = SCENARIOS[scnIdx];
+      $('#scnEyebrow').textContent = 'บทที่ ' + (scnIdx + 1) + ' / ' + SCENARIOS.length;
+      $('#scnTitle').textContent = scn.title;
+      $('#scnText').textContent = scn.text;
+      $('#scnChain').innerHTML = scn.order.map((r, i) =>
+        chainBadgeHTML(r) + (i < scn.order.length - 1 ? '<span class="chain-arrow">&gt;</span>' : '')
+      ).join('');
+      showScreen('screen-scenario');
+    }
+    $('#btnScenarioContinue').addEventListener('click', renderQuestion);
+
+    /* ---- Question ---- */
+    function renderQuestion() {
+      const q = PLAY[qIndex];
+      const r = role(q.role);
+
+      $('#qRole').innerHTML = badgeHTML(q.role) + '<span>' + r.name + '</span>';
+      $('#qCount').textContent = 'บทที่ ' + (q.scenarioIndex + 1) + ' · ขั้นที่ ' + (q.stepIndex + 1) + '/4 · รวม ' + (qIndex + 1) + '/' + TOTAL_Q;
+      $('#qProgressFill').style.width = (qIndex / TOTAL_Q * 100) + '%';
+      $('#qLabel').textContent = q.label;
+      $('#qText').textContent = q.text;
+
+      $('#qChoices').innerHTML = q.choices.map((c, i) =>
+        '<button class="choice" data-idx="' + i + '"><span class="num">' + (i + 1) + '</span><span>' + c.text + '</span></button>'
+      ).join('');
+
+      $('#qFeedback').classList.remove('show');
+      $('#qFeedback').innerHTML = '';
+      $('#btnNext').disabled = true;
+      pendingChoice = null;
+
+      document.querySelectorAll('.choice').forEach(btn => {
+        btn.addEventListener('click', () => selectChoice(btn, q, r));
+      });
+
+      showScreen('screen-question');
+    }
+
+    function selectChoice(btn, q, r) {
+      if (pendingChoice !== null) return;
+      const idx = parseInt(btn.dataset.idx, 10);
+      pendingChoice = idx;
+      const chosen = q.choices[idx];
+
+      document.querySelectorAll('.choice').forEach(b => {
+        b.setAttribute('disabled', 'true');
+        if (parseInt(b.dataset.idx, 10) === idx) b.classList.add('picked');
+      });
+
+      STAT_KEYS.forEach(k => stats[k] += chosen.delta[k] || 0);
+      clampStats();
+      renderHUD($('#hud'));
+
+      answers.push({ role: q.role, label: q.label, text: q.text, chosenText: chosen.text });
+
+      const isLastStepOfScenario = q.stepIndex === SCENARIOS[q.scenarioIndex].order.length - 1;
+      let nextLine = '';
+      if (isLastStepOfScenario) {
+        nextLine = 'บทนี้จบแล้ว — ผลลัพธ์ทั้งหมดถูกบันทึกไว้ในสถานะประเทศ';
+      } else {
+        const nextRoleId = SCENARIOS[q.scenarioIndex].order[q.stepIndex + 1];
+        nextLine = 'ผลจะส่งต่อไปถึง: ' + role(nextRoleId).name;
+      }
+
+      $('#qFeedback').innerHTML = '<b>ผลกระทบ:</b> ' + q.feedback + '<div class="fnext">' + nextLine + '</div>';
+      $('#qFeedback').classList.add('show');
+      $('#btnNext').disabled = false;
+    }
+
+    $('#btnNext').addEventListener('click', () => {
+      if ($('#btnNext').disabled) return;
+      $('#btnNext').disabled = true; // guard against double-advance while transitioning
+
+      const finishedScenario = PLAY[qIndex].scenarioIndex;
+      const isLastStepOfScenario = PLAY[qIndex].stepIndex === SCENARIOS[finishedScenario].order.length - 1;
+
+      qIndex++;
+
+      if (isLastStepOfScenario) {
+        unlockBuilding(finishedScenario, SCENARIOS[finishedScenario].title);
+      }
+
+      if (qIndex >= TOTAL_Q) {
+        showEnding();
+        return;
+      }
+
+      const nextScenario = PLAY[qIndex].scenarioIndex;
+      if (nextScenario !== finishedScenario) {
+        goToScenarioIntro(nextScenario);
+      } else {
+        renderQuestion();
+      }
+    });
+
+    /* ---- Ending ---- */
+    function computeEnding() {
+      const avg = STAT_KEYS.reduce((s, k) => s + stats[k], 0) / STAT_KEYS.length;
+      if (avg >= 75) return {
+        tag: 'ยอดเยี่ยม', title: 'ประเทศพัฒนาอย่างสมดุลและยั่งยืน',
+        desc: 'ประเทศของคุณเติบโตไปพร้อมกับความสมดุลของเศรษฐกิจ สังคม และสิ่งแวดล้อม ตามแนวเศรษฐกิจพอเพียงอย่างแท้จริง ประชาชนมีภูมิคุ้มกันพร้อมรับความเปลี่ยนแปลง',
+        bg: 'var(--paddy)'
+      };
+      if (avg >= 60) return {
+        tag: 'ดี', title: 'ประเทศเติบโตได้ดี แต่ยังต้องสร้างสมดุลเพิ่มเติม',
+        desc: 'ประเทศของคุณมีพัฒนาการที่น่าพอใจ แต่บางด้านยังไม่สมดุลเท่าที่ควร ลองทบทวนว่าการตัดสินใจใดที่เน้นผลระยะสั้นมากเกินไป',
+        bg: 'var(--gold-deep)'
+      };
+      if (avg >= 45) return {
+        tag: 'ต้องปรับปรุง', title: 'ประเทศเผชิญความท้าทาย',
+        desc: 'การตัดสินใจหลายครั้งเน้นผลประโยชน์ระยะสั้นมากกว่าความยั่งยืน ทำให้ประเทศขาดภูมิคุ้มกันต่อความเสี่ยง ควรทบทวนแนวทางการพัฒนาใหม่',
+        bg: 'var(--clay)'
+      };
+      return {
+        tag: 'วิกฤต', title: 'ประเทศเข้าสู่ภาวะวิกฤต',
+        desc: 'การเติบโตที่ไม่สมดุลและขาดความพอประมาณ ทำให้เศรษฐกิจ สังคม และสิ่งแวดล้อมของประเทศอ่อนแอลงพร้อมกัน นี่คือผลลัพธ์เมื่อขาดหลักเศรษฐกิจพอเพียง',
+        bg: 'var(--danger)'
+      };
+    }
+
+    function showEnding() {
+      const result = computeEnding();
+      $('#endTitle').textContent = result.title;
+      $('#endTag').textContent = result.tag;
+      $('#endTag').style.background = result.bg;
+      $('#endTag').style.color = '#fff';
+      $('#endDesc').textContent = result.desc;
+      renderHUD($('#finalHud'));
+      renderSummaryList();
+      showScreen('screen-ending');
+    }
+
+    function renderSummaryList() {
+      $('#summaryList').innerHTML = answers.map((a, i) => {
+        const r = role(a.role);
+        return '<div class="sum-item">'
+          + '<div class="sr">ข้อ ' + (i + 1) + ' · ' + r.name + ' · ' + a.label + '</div>'
+          + '<div class="sq">' + a.text + '</div>'
+          + '<div class="sa">คำตอบที่เลือก: ' + a.chosenText + '</div></div>';
+      }).join('');
+    }
+
+    $('#btnToggleSummary').addEventListener('click', () => {
+      $('#summaryList').classList.toggle('show');
+      $('#btnToggleSummary').textContent = $('#summaryList').classList.contains('show')
+        ? 'ซ่อนสรุปคำตอบ' : 'ดูสรุปคำตอบทั้ง 20 ข้อ';
+    });
+    $('#btnPrint').addEventListener('click', () => {
+      $('#summaryList').classList.add('show');
+      window.print();
+    });
+    $('#btnRestart').addEventListener('click', () => {
+      stats = { economy: 50, society: 50, environment: 50, sufficiency: 50 };
+      qIndex = 0;
+      answers = [];
+      pendingChoice = null;
+      unlockedBuildings = new Set();
+      $('#hud').classList.remove('show');
+      document.querySelectorAll('.vslot').forEach(el => el.classList.remove('on'));
+      showScreen('screen-start');
+    });
+
+    /* ============================================================
+       INIT
+       ============================================================ */
+    renderRolePreview();
+    renderVillageSlots();
+  </script>
+</body>
+
+</html>
